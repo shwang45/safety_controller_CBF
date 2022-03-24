@@ -51,7 +51,7 @@ class SafetyControl():
         self.ConstantForceFlag = True # Constant Force
         self.variable_damping_flag = False # Using variable damping ??
         self.UsingOSQP_flag = True # using OSQP Solver
-        self.UsingClosedQP_flag = False # Using Closed QP.
+        self.UsingClosedQP_flag = False # Using Closed form QP.
         
         
         
@@ -109,7 +109,7 @@ class SafetyControl():
         # E matrix  6 by 1   in tarun code af matrix
         #################################### TO DO LIST - np.dot(B,self.velocity)!!! CHECK
         #e_temp = np.dot(np.linalg.pinv(I), (np.dot(K,x_eq) + self.force_applied) - np.dot(B,self.velocity))
-        e_temp = np.dot(np.linalg.pinv(I), (np.dot(K,x_eq) + self.force_applied))
+        e_temp = np.dot(np.linalg.pinv(I), (np.dot(K,x_eq) + self.force_applied)) # TODO : Check this part sign -> 03.23.2022
         boldmat = np.diag(B).reshape((3,1))
         f_temp = np.dot(np.linalg.pinv(I),np.array([self.velocity[0]*boldmat[0],self.velocity[1]*boldmat[1],self.velocity[2]*boldmat[2]]))
         
@@ -183,7 +183,8 @@ class SafetyControl():
         L_Fhh_z = np.matmul(self.dh_dx_z.T, np.array([self.Lambda[2],self.Lambda[5]]))  # 1 by 1
         
         
-        
+        # dh/dx*f(x) = L_fh_x + L_Fhh_x + L_haf_x
+        # dh/dx*g(x) = L_gh_x
         
         ### This term g(x) vector lie derivative 
         L_gh_x = np.matmul(self.dh_dx_x.T, np.array([self.B_mat[0],self.B_mat[3]])) # 1 by 1
@@ -264,26 +265,27 @@ class SafetyControl():
     
     def QpSolver(self,B_old,x_t_s, v_t_s, a_t_s, gamma_safe = 10, epsilon = 10):
         
-        #this term for making constraint                      h_dot >=0   ->   dh/dx*[f(x) + g(x)*b_r] >= -alpha*h   ->   -dh/dx*g(x)*b_r =< alpha*h + dh/dx*f(x)
+        #this term for making constraint   h_dot >=0   ->   dh/dx*[f(x) + g(x)*b_r] >= -alpha*h   ->   -dh/dx*g(x)*b_r =< alpha*h + dh/dx*f(x)
+        # h_temp = dh/dx * f(x) + alpha*h = L_fh_x + L_Fhh_x + L_haf_x + alpha*h
         h_temp_x = self.L_fh[0] + self.L_Fhh[0]*self.b_h + self.L_haf[0] + gamma_safe*self.h_x    ## dh/dx * f(x) + alpha*h
         h_temp_y = self.L_fh[1] + self.L_Fhh[1]*self.b_h + self.L_haf[1] + gamma_safe*self.h_y
         h_temp_z = self.L_fh[2] + self.L_Fhh[2]*self.b_h + self.L_haf[2] + gamma_safe*self.h_z
         
         gamma_mat = np.array([[0.0, 1.0],
                               [0.0,-1.0]])
-        
+        #just f(x)
         x_dot_x = self.f_x_x_temp + self.lambda_x_temp*self.b_h + self.e_x_temp
         
         fc_x = np.dot(gamma_mat,x_dot_x)
         fc_g = np.dot(gamma_mat,self.g_x_temp)
         fc_g1 = np.dot(gamma_mat, np.array([0,1]).T)
         
+        # just f(x)
         f_temp_x = self.f_x_x_temp[1,0] + self.lambda_x_temp[1,0]*self.b_h + self.e_x_temp[1,0]
-        
         f_temp_y = self.f_x_y_temp[1,0] + self.lambda_y_temp[1,0]*self.b_h + self.e_y_temp[1,0]
         f_temp_z = self.f_x_z_temp[1,0] + self.lambda_z_temp[1,0]*self.b_h + self.e_z_temp[1,0]
         # (B_old[0][0]/self.max_joint_acceleration)*self.velocity[0]**2 = affine term
-        h_dot_x = self.L_fh[0] + self.L_Fhh[0]*self.b_h + self.L_haf[0] + self.L_gh.item(0)*B_old[0][0]
+        h_dot_x = self.L_fh[0] + self.L_Fhh[0]*self.b_h + self.L_haf[0] + self.L_gh.item(0)*B_old[0][0] +self.L_ghu1[0]
         h_dot_x = h_dot_x[0]
         #direct_h_dot =  -a_t_s[0]*x_t_s[0] + np.tanh(v_t_s[0])**2*x_t_s[0]*a_t_s[0] - np.tanh(v_t_s[0])*v_t_s[0] - (v_t_s[0]*a_t_s[0])/self.max_joint_acceleration
         
