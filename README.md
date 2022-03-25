@@ -1,4 +1,4 @@
-# safety_controller_CBF
+# Safety Controller with CBF
 
 Using Control Barrier Function for Shoulder Exoskeleton Robot
 
