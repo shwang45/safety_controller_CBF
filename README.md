@@ -8,6 +8,7 @@ Now This CODE is not final version
 
 
 # Version Check
+03.02.2022 - Add Matlab Code
 03.25.2022 - Modified the closed form QP solver matrix. After that check it have same result with using QP solver package(CVXOPT)
 
 
