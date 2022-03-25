@@ -326,8 +326,8 @@ class SafetyControl():
                     
                 s1 = -np.linalg.multi_dot([a.T, np.linalg.pinv(P), a])  ## S = -a^T*P^-1*a
                 a1 = -np.dot(np.linalg.pinv(P),q)
-                a2 = -np.linalg.multi_dot([np.linalg.inv(P), a, np.linalg.inv(s1), a.T, np.linalg.inv(P), q])
-                a3 = -np.linalg.multi_dot([np.linalg.inv(P), a, np.linalg.inv(s1), b])
+                a2 = -np.linalg.multi_dot([np.linalg.pinv(P), a, np.linalg.pinv(s1), a.T, np.linalg.pinv(P), q])
+                a3 = -np.linalg.multi_dot([np.linalg.pinv(P), a, np.linalg.pinv(s1), b])
                 sol_value = a1+a2+a3
                 
                                     
