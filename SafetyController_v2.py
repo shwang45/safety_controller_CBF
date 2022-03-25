@@ -313,7 +313,8 @@ class SafetyControl():
             """
             if(direct_h_dot < self.kappa_h_dot):
                 # From https://dev10110.github.io/tech-notes/maths/qp_closed_form.html
-                P = np.diag(np.array([1, 1, 1000]))
+                # Our Objective Function J = 1/2*(b_new -b_old)^2 +
+                P = np.diag(np.array([0.5, 0.5, 1000]))
                 #P = P.T @ P
                 q = np.array([-B_old[0][0], 10, 0]).reshape(3,1) 
                 
@@ -325,8 +326,8 @@ class SafetyControl():
                     
                 s1 = -np.linalg.multi_dot([a.T, np.linalg.pinv(P), a])  ## S = -a^T*P^-1*a
                 a1 = -np.dot(np.linalg.pinv(P),q)
-                a2 = -np.linalg.multi_dot([np.linalg.pinv(P), a, np.linalg.pinv(s1), a.T, np.linalg.pinv(P), q])
-                a3 = -np.linalg.multi_dot([np.linalg.pinv(P), a, np.linalg.pinv(s1), b])
+                a2 = -np.linalg.multi_dot([np.linalg.inv(P), a, np.linalg.inv(s1), a.T, np.linalg.inv(P), q])
+                a3 = -np.linalg.multi_dot([np.linalg.inv(P), a, np.linalg.inv(s1), b])
                 sol_value = a1+a2+a3
                 
                                     
